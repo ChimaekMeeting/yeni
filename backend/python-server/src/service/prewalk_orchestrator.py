@@ -95,6 +95,10 @@ class PrewalkOrchestrator:
 
         # CASE 2: 정보를 다 모은 후, 사용자에게 출발지, 목적지를 1개씩 택하게 할 때
         elif current_node == "location_selection":
+            print("\nCASE2")
+            print(context)
+            print()
+            
             lat = state.get("lat")
             lon = state.get("lon")
 

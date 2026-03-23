@@ -36,7 +36,21 @@ class StateChecker:
     def is_location_ok(self, data):
         """
         """
-        return None not in data.values()
+        for value in data.values():
+            if isinstance(value, dict):
+                if None in value.values():
+                    return False
+                for v in value:
+                    if isinstance(v, str) and "" == v:
+                        return False
+            
+            elif isinstance(value, str) and  "" == value:
+                    return False
+                
+        if not data.get("is_location_selected") or not data.get("is_in_candidates"):
+            return False
+        
+        return True
     
     async def handle_location_routing(self, user_prompt, context, state):
         """
@@ -62,6 +76,10 @@ class StateChecker:
 
         origin_ok = self.is_location_ok(origin_res)
         destination_ok = self.is_location_ok(destination_res)
+        print("\n테스트")
+        print(is_circular)
+        print(origin_ok)
+        print(destination_ok)
 
         # 순환
         if is_circular:
@@ -100,13 +118,16 @@ class StateChecker:
                     "address": destination_res.get("address"),
                     "coordinate": destination_res.get("coordinate")
                 }
-            elif destination_res.get("is_in_candidates"):
+            elif not destination_res.get("is_in_candidates"):
                 state["user_context"]["destination"] = destination_res.get("place_name")
 
             if origin_ok and destination_ok:
                 state["next_node"] = "plan_summarization"
             else:
                 state["next_node"] = "location_selection"
+
+        print(state["next_node"])
+        print()
 
         return state
 
