@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from src.entity.base import init_db
-from src.api import user, recommendation
+from src.api import user, prewalk
 import uvicorn
 
 @asynccontextmanager
@@ -29,7 +29,7 @@ app.add_middleware(
 )
 
 app.include_router(user.router)
-app.include_router(recommendation.router)
+app.include_router(prewalk.router)
 
 @app.get("/")
 def read_root():

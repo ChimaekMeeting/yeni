@@ -1,23 +1,22 @@
 from fastapi import APIRouter, Depends
-from src.schema.recommendation_schema import InitRequest, ChatRequest, ChatResponse
-from src.service.recommendation_service import RecommendationService
-
+from src.schema.prewalk_schema import InitRequest, ChatRequest, ChatResponse
+from src.service.prewalk_orchestrator import PrewalkOrchestrator
 router = APIRouter(
-    prefix="/api/recommendation",
-    tags=["recommendation"]
+    prefix="/api/prewalk",
+    tags=["prewalk"]
 )
 
 # 싱글톤 인스턴스
-route_service = RecommendationService()
+prewalk_orchestrator = PrewalkOrchestrator()
 
 #서비스 인스턴스를 관리하는 함수(의존성 주입용)
-def get_route_service() -> RecommendationService:
-    return route_service
+def get_prewalk_orchestrator() -> PrewalkOrchestrator:
+    return prewalk_orchestrator
 
 @router.post("/init", response_model=ChatResponse)
 async def read_init_message(
     request: InitRequest,
-    service: RecommendationService = Depends(get_route_service)
+    service: PrewalkOrchestrator = Depends(get_prewalk_orchestrator)
 ):
     """
     산책 추천 챗봇의 첫 번째 메시지입니다.
@@ -28,7 +27,7 @@ async def read_init_message(
 @router.post("/intent", response_model=ChatResponse)
 async def read_message(
     request: ChatRequest,
-    service: RecommendationService = Depends(get_route_service)
+    service: PrewalkOrchestrator = Depends(get_prewalk_orchestrator)
 ):
     """
     사용자가 메시지를 보낼 때마다 호출됩니다.

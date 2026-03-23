@@ -5,7 +5,7 @@ class WeightAssigner:
         self.gpt_client = gpt_client
         self.parser = JsonOutputParser()
 
-    async def get_feature_weights(self, context: dict, weather_data: dict) -> dict:
+    async def run(self, context: dict, weather_data: dict) -> dict:
         """
         사용자의 산책 목적과 상황에 기반하여 feature별 가중치를 결정합니다.
         """

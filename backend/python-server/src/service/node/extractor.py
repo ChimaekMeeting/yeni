@@ -1,4 +1,4 @@
-from src.schema.recommendation_schema import UserPreferenceContext
+from src.schema.prewalk_schema import UserPreferenceContext
 from langchain_core.output_parsers import JsonOutputParser
 
 class Extractor:
@@ -6,7 +6,7 @@ class Extractor:
         self.gpt_client = gpt_client
         self.parser = JsonOutputParser(pydantic_object=UserPreferenceContext)
 
-    async def extract_info(self, user_prompt: str, context: dict) -> dict:
+    async def run(self, user_prompt: str, context: dict) -> dict:
         """
         사용자 프롬프트에서 산책 조건을 추출하여 기존 컨텍스트와 병합합니다.
         """

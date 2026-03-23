@@ -1,12 +1,12 @@
 from langchain_core.output_parsers import StrOutputParser
 import re
 
-class DecisionMaker:
+class PlanRouter:
     def __init__(self, gpt_client):
         self.gpt_client = gpt_client
         self.parser = StrOutputParser()
 
-    async def is_user_confirmed(self, user_prompt: str) -> bool:
+    async def run(self, user_prompt: str) -> bool:
         """
         제안된 산책 조건에 대한 동의 여부를 반환합니다.
 
@@ -15,7 +15,7 @@ class DecisionMaker:
             - 거절/수정 요청 -> False
         """
         response = await self.gpt_client.get_response(
-            prompt_name="decision",
+            prompt_name="plan_routing",
             input_data={"user_prompt": user_prompt},
             output_parser=self.parser
         )

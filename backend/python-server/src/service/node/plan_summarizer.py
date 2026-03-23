@@ -1,11 +1,11 @@
 from langchain_core.output_parsers import StrOutputParser
 
-class FinalReviewer:
+class PlanSummarizer:
     def __init__(self, gpt_client):
         self.gpt_client = gpt_client
         self.parser = StrOutputParser()
 
-    async def generate_review_message(self, context: dict) -> str:
+    async def run(self, context: dict) -> str:
         """
         수집된 정보를 요약하여 최종 확인 질문을 생성합니다.
         """
@@ -14,7 +14,7 @@ class FinalReviewer:
         destination = origin if is_circular else context.get("destination")
 
         review_message = await self.gpt_client.get_response(
-            prompt_name="final_review",
+            prompt_name="plan_summarization",
             input_data={
                 "is_circular": "순환" if is_circular else "편도",
                 "origin": origin,

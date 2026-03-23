@@ -1,13 +1,21 @@
 python-dotenv==1.0.1
-pydantic-settings>=2.0.0
+pydantic-settings==2.0.0
 
 langchain-openai>=0.3.0
-langchain-core>=0.3.0
+langchain-core==0.3.0
 
-fastapi>=0.115.0
+fastapi==0.115.0
 uvicorn[standard]==0.32.0
 
 psycopg2-binary
-sqlalchemy>=2.0.0
+sqlalchem==2.0.0
 
-redis>=5.0.0
+redis==5.0.0
+
+streamlit==1.40.0
+
+osmnx==1.9.1
+h3==4.1.0
+folium==0.17.0
+streamlit-folium==0.23.0
+scikit-learn==1.4.0

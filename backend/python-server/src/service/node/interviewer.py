@@ -5,7 +5,7 @@ class Interviewer:
         self.gpt_client = gpt_client
         self.parser = StrOutputParser()
     
-    async def get_next_question(self, context: dict) -> str:
+    async def run(self, context: dict) -> str:
         """
         부족한 정보를 파악하여 사용자에게 던질 자연스러운 질문을 생성합니다.
         """

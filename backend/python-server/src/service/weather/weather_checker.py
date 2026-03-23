@@ -6,7 +6,7 @@ class WeatherChecker:
     def __init__(self):
         self.weather_client = WeatherClient()
         self.init_message = textwrap.dedent("""
-            반갑습니다! 현재 위치를 중심으로 최적의 산책로를 추천해 드릴게요.
+            현재 위치를 중심으로 최적의 산책로를 추천해 드릴게요.
             원하시는 산책 조건을 말씀해 주시겠어요?
             1. 코스 종류: 순환 vs 편도
             2. 도착 지점: (편도 선택 시) 목적지 명칭

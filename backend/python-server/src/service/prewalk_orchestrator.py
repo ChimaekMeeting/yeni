@@ -4,25 +4,27 @@ from src.repository.user_repository import UserRepository
 from src.repository.chat_session_repository import ChatSessionRepository
 from src.repository.chat_state_repository import ChatStateRepository
 from uuid import uuid4
-from src.service.recommendation.weather_checker import WeatherChecker
-from src.service.recommendation.state_checker import StateChecker
-from src.service.recommendation.interviewer import Interviewer
-from src.service.recommendation.final_reviewer import FinalReviewer
-from src.service.recommendation.weight_assigner import WeightAssigner
-from src.service.recommendation.location_resolver import LocationResolver
-from src.schema.recommendation_schema import ChatResponse
+from src.service.weather.weather_checker import WeatherChecker
+from src.service.core.state_checker import StateChecker
+from src.service.node.interviewer import Interviewer
+from src.service.node.plan_summarizer import PlanSummarizer
+from src.service.node.weight_assigner import WeightAssigner
+from src.service.node.location_searcher import LocationSearcher
+from src.service.common.string_converter import StringConverter
+from src.schema.prewalk_schema import ChatResponse
 
-class RecommendationService:
+class PrewalkOrchestrator:
     def __init__(self):
         self.gpt_client = GPTClient()
         self.weather_checker = WeatherChecker()
         self.kakao_client = KakaoClient()
 
-        self.state_checker = StateChecker(self.gpt_client)
+        self.string_converter = StringConverter()
+        self.state_checker = StateChecker(self.gpt_client, self.string_converter)
         self.interviewer = Interviewer(self.gpt_client)
-        self.final_reviewer = FinalReviewer(self.gpt_client)
+        self.plan_summarizer = PlanSummarizer(self.gpt_client)
         self.weight_assigner = WeightAssigner(self.gpt_client)
-        self.location_resolver = LocationResolver(self.gpt_client, self.kakao_client)
+        self.location_searcher = LocationSearcher(self.gpt_client, self.kakao_client)
 
     async def get_init_message(self, user_uuid: str, lat: float, lon: float) -> ChatResponse:
         """
@@ -54,8 +56,10 @@ class RecommendationService:
             "user_prompt": "",              # 유저 프롬프트
 
             # 워크플로우 상 다음 단계
-            # - extraction: 정보 추출 | interview: 추가 질문 | selection: 출발지, 목적지 1택
-            # - final_review: 요약 확인 | decision: 승인 판정   | weighting: 가중치 산출
+            # - extraction: 정보 추출 | interview: 추가 질문 |
+            # - location_selection: 출발지, 목적지 1택 | location_routing: 출발지, 목적지 관련 동의 여부 판단
+            # - plan_summarization: 산책 계획 요약 | plan_routing: 최종 계획 관련 동의 여부 판단  | weighting: 가중치 산출
+            # - end: 종료
             "next_node": "extraction"
         }
 
@@ -79,36 +83,45 @@ class RecommendationService:
 
         current_node = state.get("next_node")
         context = state.get("user_context")
-        weather_data = state.get("weather_data")
-        lat = state.get("lat")
-        lon = state.get("lon")
-        print(lat, lon)
+
+        print(current_node)
+        print(context)
 
         # 결정된 노드에 따라 서비스 호출
         # CASE 1: 정보가 더 필요할 때
         if current_node == "interview":
-            message = await self.interviewer.get_next_question(context)
+            message = await self.interviewer.run(context)
             state["next_node"] = "extraction"
 
-        # CASE 2: 정보를 다 모은 후, 사용자에게 최종 점검을 받아야 할 때
-        elif current_node == "final_review":
-            message = await self.final_reviewer.generate_review_message(context)
-            locations = await self.location_resolver.location_resolver(context, lat, lon)
+        # CASE 2: 정보를 다 모은 후, 사용자에게 출발지, 목적지를 1개씩 택하게 할 때
+        elif current_node == "location_selection":
+            lat = state.get("lat")
+            lon = state.get("lon")
+
+            locations = await self.location_searcher.run(context, lat, lon)
             origin_location = locations.get("origin_location")
             destination_location = locations.get("destination_location")
-            message += f"""
-            출발지와 목적지의 정확한 위치를 확인해주세요! 이곳 중 원하는 장소를 말씀해주시면 산책 경로를 생성해드릴게요!
-            출발지: {origin_location.get("place_name")}( {origin_location.get("place_address")} )
-            목적지: {destination_location[0].get("place_name")}( {destination_location[0].get("place_address")} )
+
+            message = f"""
+            출발지와 목적지의 정확한 위치를 확인해주세요! 이곳 중 원하는 장소를 말씀해주시면 산책 경로를 생성해드릴게요!\n
+            출발지\n{self.string_converter.dict_to_str(origin_location) if isinstance(origin_location, dict) else self.string_converter.list_to_str(origin_location)}
+            목적지\n{self.string_converter.dict_to_str(destination_location) if isinstance(destination_location, dict) else self.string_converter.list_to_str(destination_location)}
             """
             state["origin_candidate"] = origin_location  # 정확한 위치 데이터를 넣은 json 형식으로 출발지 업데이트
             state["destination_candidate"] = destination_location  # 정확한 위치 데이터를 넣은 json 형식으로 목적지 업데이트
-            state["next_node"] = "decision"
+            state["next_node"] = "location_routing"
 
-        # CASE 3: 사용자가 만족해서 최종적으로 지도 레이어별 가중치를 결정해야 할 때
+        # CASE 3: 정보를 다 모은 후, 사용자에게 최종 검토를 받을 때
+        elif current_node == "plan_summarization":
+            message = await self.plan_summarizer.run(context)
+            state["next_node"] = "plan_routing"
+
+        # CASE 4: 사용자가 만족해서 최종적으로 지도 레이어별 가중치를 결정해야 할 때
         elif current_node == "weighting":
-            weights = await self.weight_assigner.get_feature_weights(context, weather_data)
+            weather_data = state.get("weather_data")
+            weights = await self.weight_assigner.run(context, weather_data)
             message = f"모든 분석이 완료되었습니다! 가중치는 {weights}입니다."
+            state["next_node"] = "end"
         
         # state 업데이트
         await ChatStateRepository.save_state(thread_id, state)
