@@ -8,25 +8,28 @@
 ├── requirements.txt
 └── src
     ├── api
-    │   ├── recommendation.py
+    │   ├── prewalk.py
     │   └── user.py
     ├── client
     │   ├── gpt_client.py
+    │   ├── kakao_client.py
     │   └── weather_client.py
     ├── database
     │   ├── postgresql.py
     │   └── valkey.py
-    ├── entity   
+    ├── entity
     │   ├── base.py
     │   ├── chat_session.py
     │   ├── user.py
     │   └── user_preference_context.py
-    ├── main.py
     ├── prompt
-    │   ├── decision.yaml
     │   ├── extraction.yaml
-    │   ├── final_review.yaml
     │   ├── interview.yaml
+    │   ├── location_routing.yaml
+    │   ├── location_selection.yaml
+    │   ├── map_generation.yaml
+    │   ├── plan_routing.yaml
+    │   ├── plan_summarization.yaml
     │   └── weight_assign.yaml
     ├── repository
     │   ├── chat_session_repository.py
@@ -34,19 +37,28 @@
     │   ├── user_preference_context_repository.py
     │   └── user_repository.py
     ├── schema
-    │   ├── recommendation_schema.py
+    │   ├── prewalk_schema.py
     │   └── user_schema.py
-    └── service
-        ├── recommendation
-        │   ├── decision_maker.py
-        │   ├── extractor.py
-        │   ├── final_reviewer.py
-        │   ├── interviewer.py
-        │   ├── state_checker.py
-        │   ├── weather_checker.py
-        │   └── weight_assigner.py
-        ├── recommendation_service.py
-        └── user_service.py
+    ├── service
+    │   ├── common
+    │   │   └── string_converter.py
+    │   ├── core
+    │   │   └── state_checker.py
+    │   ├── map
+    │   ├── node
+    │   │   ├── interviewer.py
+    │   │   ├── location_searcher.py
+    │   │   ├── plan_summarizer.py
+    │   │   └── weight_assigner.py
+    │   ├── prewalk_orchestrator.py
+    │   ├── router                                                                                                     
+    │   │   ├── location_router.py
+    │   │   └── plan_router.py
+    │   ├── user_service.py
+    │   └── weather
+    │       └── weather_checker.py
+    ├── main.py
+    └── test.py
 ```
 
 ### 실행 방법
